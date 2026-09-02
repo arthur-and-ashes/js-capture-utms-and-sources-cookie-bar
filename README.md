@@ -1,22 +1,43 @@
 # js-cookie-kit-global-appliance
 
-Petit script « tout-en-un », sans dépendance externe (hormis [js-cookie](https://github.com/js-cookie/js-cookie) embarqué), à ajouter sur toutes les pages d'un site :
+Scripts front-end à ajouter sur toutes les pages d'un site pour capturer les
+UTM et (optionnellement) gérer le consentement cookies + Google Analytics.
+
+Deux variantes sont fournies dans `src/`, à choisir selon le besoin :
+
+| Fichier | Bandeau de consentement | Google Analytics | Capture UTM | Dépendance |
+| ------- | :---------------------: | :--------------: | :---------: | ---------- |
+| [`utm-capture-with-cookie-bar.js`](src/utm-capture-with-cookie-bar.js) | ✅ | ✅ (GA4, optionnel) | ✅ | js-cookie (embarqué) |
+| [`utm-capture-simple.js`](src/utm-capture-simple.js) | ❌ | ❌ | ✅ | aucune |
+
+## utm-capture-with-cookie-bar.js
+
+Version « tout-en-un » :
 
 1. **Bandeau de consentement cookies** (affiché tant qu'aucun choix n'a été fait).
-2. **Chargement de Google Analytics** selon le choix de l'utilisateur.
+2. **Chargement de Google Analytics 4** selon le choix de l'utilisateur (optionnel).
 3. **Capture des UTM** (`utm_source`, `utm_medium`, `utm_campaign`) dans un cookie,
    puis réinjection dans les champs cachés d'un formulaire (`field_source`,
    `field_medium`, `field_campaign`, `field_referal`).
 
-## Utilisation
-
-Inclure le fichier sur toutes les pages, de préférence avant la fermeture du `</body>` :
+Inclure le fichier, de préférence avant la fermeture du `</body>` :
 
 ```html
-<script src="src/js-cookie-kit-global-appliance.js"></script>
+<script src="src/utm-capture-with-cookie-bar.js"></script>
 ```
 
 La bibliothèque `js-cookie` est déjà incluse en tête du fichier — rien d'autre à charger.
+
+## utm-capture-simple.js
+
+Version minimale, **sans bandeau ni Google Analytics** : elle se contente de
+récupérer les UTM de l'URL, de les cumuler dans le cookie `cookie_utms`, puis de
+réinjecter ces valeurs dans les champs `field_source`, `field_medium` et
+`field_campaign`. Autonome, aucune dépendance.
+
+```html
+<script src="src/utm-capture-simple.js"></script>
+```
 
 ### Cookies posés
 
