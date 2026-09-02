@@ -33,10 +33,10 @@ la durée des cookies et les libellés.
 
 ## ⚠️ Points d'attention connus
 
-- **Google Analytics — ID Universal Analytics (`UA-…`)** : Universal Analytics
-  est arrêté par Google depuis **juillet 2023** et ne collecte plus de données.
-  À migrer vers un ID **GA4** (`G-XXXX`). Le loader est chargé à l'identique de
-  la version d'origine (sans initialisation `gtag`/`dataLayer`).
+- **Google Analytics 4** : renseigner l'ID de mesure GA4 dans `config.GA4_id`
+  (format `G-XXXXXXXXXX`). Tant que le placeholder n'est pas remplacé, aucun
+  suivi n'est chargé. Le loader `gtag.js` est chargé puis initialisé
+  (`dataLayer` + `gtag('config', …)`) uniquement en cas de consentement.
 - **Modèle opt-out** : GA et le cookie UTM sont posés **par défaut** et coupés
   au refus. Pour un site soumis au **RGPD**, un modèle **opt-in** (rien avant
   consentement explicite) serait requis.

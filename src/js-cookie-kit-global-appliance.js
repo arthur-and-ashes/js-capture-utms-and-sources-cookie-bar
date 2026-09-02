@@ -8,9 +8,9 @@
  * NOTE conformité : le modèle opt-out d'origine est conservé à la demande
  *   (GA et le cookie UTM se chargent par défaut, se coupent au clic « stop »).
  *   Pour un site FR, le RGPD exigerait un modèle opt-in (rien avant consentement).
- * NOTE GA : UA-74106484-1 est une propriété Universal Analytics, arrêtée par
- *   Google depuis juillet 2023 — elle ne collecte plus. À migrer vers GA4.
- *   Le loader est injecté à l'identique de l'original (sans init gtag/dataLayer).
+ * NOTE GA : le suivi utilise Google Analytics 4 — renseigner l'ID de mesure
+ *   dans `config.GA4_id` (format G-XXXXXXXXXX). Le loader gtag.js est chargé
+ *   puis initialisé (dataLayer + gtag('config', …)) uniquement si consentement.
  * ========================================================================== */
 (function () {
 	'use strict';
@@ -20,7 +20,7 @@
 		policyUrl: 'https://arthur-and-ashes.com/politique-de-confidentialite/',
 		domain: 'arthur-and-ashes.com',
 		okColor: '#0b0544',
-		gtmScript: 'https://www.googletagmanager.com/gtag/js?id=UA-74106484-1',
+		GA4_id: 'G-XXXXXXXXXX', // ⚠️ à remplacer par ton ID de mesure GA4 (format G-XXXXXXXXXX)
 		cookieExpiryDays: 120,
 		consentText: 'Cookies acceptés',
 		nonConsentText: 'Cookies bloqués'
@@ -43,13 +43,17 @@
 		}
 	}
 
-	// --- Google Analytics (chargé si consentement — comportement d'origine) ---
-	if (consented) {
+	// --- Google Analytics 4 (chargé et initialisé si consentement) ------------
+	if (consented && config.GA4_id) {
 		var gaScript = document.createElement('script');
-		gaScript.type = 'text/javascript';
 		gaScript.async = true;
-		gaScript.src = config.gtmScript;
+		gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + config.GA4_id;
 		(document.head || document.documentElement).appendChild(gaScript);
+
+		window.dataLayer = window.dataLayer || [];
+		window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+		gtag('js', new Date());
+		gtag('config', config.GA4_id);
 	}
 
 	// --- Cookie UTM -----------------------------------------------------------
