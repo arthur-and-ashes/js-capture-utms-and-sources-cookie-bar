@@ -1,7 +1,9 @@
 # js-cookie-kit-global-appliance
 
-Scripts front-end à ajouter sur toutes les pages d'un site pour capturer les
-UTM et (optionnellement) gérer le consentement cookies + Google Analytics.
+Scripts front-end à ajouter sur toutes les pages d'un site pour **capturer les
+UTM (source, medium, campaign) et les réinjecter automatiquement dans les champs
+de vos formulaires**, et (optionnellement) gérer le consentement cookies +
+Google Analytics.
 
 Deux variantes sont fournies dans `src/`, à choisir selon le besoin :
 
@@ -38,6 +40,70 @@ réinjecter ces valeurs dans les champs `field_source`, `field_medium` et
 ```html
 <script src="src/utm-capture-simple.js"></script>
 ```
+
+## Envoyer les sources dans un formulaire
+
+C'est la fonctionnalité clé : **les deux scripts pré-remplissent automatiquement
+des champs de formulaire** avec les UTM stockés dans le cookie. Au chargement de
+la page, le script recherche des champs par leur `id` et y écrit la valeur
+correspondante. Rien à coder côté formulaire — il suffit d'ajouter des champs
+(cachés) portant les `id` attendus.
+
+### IDs reconnus
+
+| `id` du champ    | Contenu injecté         | Disponible dans                    |
+| ---------------- | ----------------------- | ---------------------------------- |
+| `field_source`   | `utm_source` cumulés    | les deux scripts                   |
+| `field_medium`   | `utm_medium` cumulés    | les deux scripts                   |
+| `field_campaign` | `utm_campaign` cumulés  | les deux scripts                   |
+| `field_referal`  | referral (réservé)      | `utm-capture-with-cookie-bar.js`   |
+
+### Exemple HTML
+
+```html
+<form action="/traitement" method="post">
+  <!-- vos champs visibles (nom, e-mail, message…) -->
+
+  <!-- remplis automatiquement par le script -->
+  <input type="hidden" id="field_source"   name="utm_source">
+  <input type="hidden" id="field_medium"   name="utm_medium">
+  <input type="hidden" id="field_campaign" name="utm_campaign">
+
+  <button type="submit">Envoyer</button>
+</form>
+```
+
+L'`id` sert au script à **trouver** le champ ; le `name` est ce que votre
+back-end ou votre e-mail **recevra** (mettez ce que vous voulez). Si le cookie
+est vide ou le champ absent, le script ne fait rien : aucune erreur, et aucune
+valeur `undefined` n'est injectée.
+
+### WordPress / Contact Form 7
+
+Utilisez le shortcode `hidden` avec l'option `id:` pour générer le bon attribut :
+
+```
+[hidden field_source id:field_source]
+[hidden field_medium id:field_medium]
+[hidden field_campaign id:field_campaign]
+```
+
+### Personnaliser les IDs (version simple)
+
+Dans `utm-capture-simple.js`, la correspondance paramètre → champ est déclarée
+dans la config, modifiable sans toucher au reste du code :
+
+```js
+params: [
+  { url: 'utm_source',   key: 'source',   field: 'field_source' },
+  { url: 'utm_medium',   key: 'medium',   field: 'field_medium' },
+  { url: 'utm_campaign', key: 'campaign', field: 'field_campaign' }
+]
+```
+
+> **Bon à savoir** : l'injection fonctionne pour un formulaire HTML classique,
+> Contact Form 7 ou Gravity Forms. Pour un formulaire piloté par React/Vue (état
+> contrôlé), écrire l'attribut ne suffit pas à mettre à jour l'état du composant.
 
 ### Cookies posés
 
