@@ -33,10 +33,12 @@ la durée des cookies et les libellés.
 
 ## ⚠️ Points d'attention connus
 
-- **Google Analytics 4** : renseigner l'ID de mesure GA4 dans `config.GA4_id`
-  (format `G-XXXXXXXXXX`). Tant que le placeholder n'est pas remplacé, aucun
-  suivi n'est chargé. Le loader `gtag.js` est chargé puis initialisé
-  (`dataLayer` + `gtag('config', …)`) uniquement en cas de consentement.
+- **Google Analytics 4 (optionnel)** : renseigner l'ID de mesure GA4 dans
+  `config.GA4_id` (format `G-XXXXXXXXXX`). **Si la variable est laissée vide,
+  GA4 n'est pas chargé du tout** — le reste du kit (bandeau, capture UTM)
+  continue de fonctionner. Quand un ID est présent, le loader `gtag.js` est
+  chargé puis initialisé (`dataLayer` + `gtag('config', …)`) uniquement en cas
+  de consentement.
 - **Modèle opt-out** : GA et le cookie UTM sont posés **par défaut** et coupés
   au refus. Pour un site soumis au **RGPD**, un modèle **opt-in** (rien avant
   consentement explicite) serait requis.

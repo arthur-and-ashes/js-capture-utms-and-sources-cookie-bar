@@ -20,7 +20,7 @@
 		policyUrl: 'https://arthur-and-ashes.com/politique-de-confidentialite/',
 		domain: 'arthur-and-ashes.com',
 		okColor: '#0b0544',
-		GA4_id: 'G-XXXXXXXXXX', // ⚠️ à remplacer par ton ID de mesure GA4 (format G-XXXXXXXXXX)
+		GA4_id: '', // ID de mesure GA4 (format G-XXXXXXXXXX). Laisser vide pour désactiver GA4.
 		cookieExpiryDays: 120,
 		consentText: 'Cookies acceptés',
 		nonConsentText: 'Cookies bloqués'
@@ -43,17 +43,19 @@
 		}
 	}
 
-	// --- Google Analytics 4 (chargé et initialisé si consentement) ------------
-	if (consented && config.GA4_id) {
+	// --- Google Analytics 4 (optionnel : seulement si un ID est renseigné) ----
+	var ga4Enabled = typeof config.GA4_id === 'string' && config.GA4_id.trim() !== '';
+	if (consented && ga4Enabled) {
+		var ga4Id = config.GA4_id.trim();
 		var gaScript = document.createElement('script');
 		gaScript.async = true;
-		gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + config.GA4_id;
+		gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + ga4Id;
 		(document.head || document.documentElement).appendChild(gaScript);
 
 		window.dataLayer = window.dataLayer || [];
 		window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
 		gtag('js', new Date());
-		gtag('config', config.GA4_id);
+		gtag('config', ga4Id);
 	}
 
 	// --- Cookie UTM -----------------------------------------------------------
