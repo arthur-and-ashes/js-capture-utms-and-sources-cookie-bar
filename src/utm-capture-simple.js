@@ -1,9 +1,10 @@
 /* ============================================================================
- * Capture des UTM — version simple
+ * Capture des sources de trafic — version simple
  *
- * Récupère les paramètres UTM de l'URL (utm_source, utm_medium, utm_campaign),
- * les cumule dans un cookie, puis réinjecte les valeurs dans les champs cachés
- * d'un formulaire (field_source, field_medium, field_campaign).
+ * Récupère les UTM de l'URL (utm_source, utm_medium, utm_campaign) ainsi que le
+ * domaine du site référent, les cumule dans un cookie, puis réinjecte les
+ * valeurs dans les champs cachés d'un formulaire (field_source, field_medium,
+ * field_campaign, field_referal).
  *
  * Autonome : aucune dépendance (pas de js-cookie). Pas de bandeau de
  * consentement, pas de Google Analytics — voir utm-capture-with-cookie-bar.js
@@ -15,13 +16,7 @@
 	// --- Configuration --------------------------------------------------------
 	var config = {
 		cookieName: 'cookie_utms',
-		cookieExpiryDays: 120,
-		// Correspondance paramètre d'URL -> clé du cookie -> id du champ de formulaire
-		params: [
-			{ url: 'utm_source', key: 'source', field: 'field_source' },
-			{ url: 'utm_medium', key: 'medium', field: 'field_medium' },
-			{ url: 'utm_campaign', key: 'campaign', field: 'field_campaign' }
-		]
+		cookieExpiryDays: 120
 	};
 
 	// --- Helpers cookies (natifs) ---------------------------------------------
@@ -57,6 +52,17 @@
 			}
 		}
 		return false;
+	}
+
+	// Récupère le domaine du site référent (document.referrer), ou false si le
+	// référent est absent ou interne (même domaine que la page courante).
+	function getReferrerHost() {
+		if (!document.referrer) { return false; }
+		var link = document.createElement('a');
+		link.href = document.referrer;
+		var host = link.hostname;
+		if (!host || host === window.location.hostname) { return false; }
+		return host;
 	}
 
 	// Analyse en toute sécurité une valeur de cookie JSON (null si invalide).
@@ -100,20 +106,29 @@
 		}
 	}
 
-	// --- 1. Mise à jour du cookie à partir des UTM de l'URL --------------------
-	var urlValues = {};
-	var hasUtm = false;
-	config.params.forEach(function (p) {
-		urlValues[p.key] = getParameter(p.url);
-		if (urlValues[p.key] !== false) { hasUtm = true; }
+	// Sources capturées : clé stockée dans le cookie, id du champ de formulaire
+	// à remplir, et fonction qui récupère la valeur (false si absente).
+	var sources = [
+		{ key: 'source',   field: 'field_source',   get: function () { return getParameter('utm_source'); } },
+		{ key: 'medium',   field: 'field_medium',   get: function () { return getParameter('utm_medium'); } },
+		{ key: 'campaign', field: 'field_campaign', get: function () { return getParameter('utm_campaign'); } },
+		{ key: 'referal',  field: 'field_referal',  get: getReferrerHost }
+	];
+
+	// --- 1. Mise à jour du cookie à partir de l'URL et du site référent --------
+	var values = {};
+	var hasData = false;
+	sources.forEach(function (s) {
+		values[s.key] = s.get();
+		if (values[s.key] !== false) { hasData = true; }
 	});
 
-	if (hasUtm) {
+	if (hasData) {
 		var existing = parseJson(getCookie(config.cookieName));
 		var data = {};
-		config.params.forEach(function (p) {
-			var merged = mergeParam(existing, p.key, urlValues[p.key]);
-			if (merged !== undefined) { data[p.key] = merged; }
+		sources.forEach(function (s) {
+			var merged = mergeParam(existing, s.key, values[s.key]);
+			if (merged !== undefined) { data[s.key] = merged; }
 		});
 		setCookie(config.cookieName, JSON.stringify(data), config.cookieExpiryDays);
 	}
@@ -122,8 +137,8 @@
 	ready(function () {
 		var data = parseJson(getCookie(config.cookieName));
 		if (!data) { return; }
-		config.params.forEach(function (p) {
-			setFieldValue(p.field, data[p.key]);
+		sources.forEach(function (s) {
+			setFieldValue(s.field, data[s.key]);
 		});
 	});
 })();

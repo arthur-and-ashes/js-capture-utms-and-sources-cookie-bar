@@ -71,6 +71,17 @@
 		return false;
 	}
 
+	// Récupère le domaine du site référent (document.referrer), ou false si le
+	// référent est absent ou interne (même domaine que la page courante).
+	function getReferrerHost() {
+		if (!document.referrer) { return false; }
+		var link = document.createElement('a');
+		link.href = document.referrer;
+		var host = link.hostname;
+		if (!host || host === window.location.hostname) { return false; }
+		return host;
+	}
+
 	// Fusionne la valeur d'un paramètre avec ce qui est déjà stocké dans le cookie.
 	// Renvoie undefined quand il n'y a rien à enregistrer pour cette clé.
 	function mergeParam(existing, key, value) {
@@ -98,18 +109,21 @@
 		var urlSrc = getParameter('utm_source');
 		var urlMdm = getParameter('utm_medium');
 		var urlCpn = getParameter('utm_campaign');
-		var hasUtm = urlSrc !== false || urlMdm !== false || urlCpn !== false;
+		var urlRfr = getReferrerHost();
+		var hasData = urlSrc !== false || urlMdm !== false || urlCpn !== false || urlRfr !== false;
 
-		if (hasUtm) {
+		if (hasData) {
 			var existing = parseCookieJson(Cookies.get('cookie_utms'));
 			var pepites = {};
 			var source = mergeParam(existing, 'source', urlSrc);
 			var medium = mergeParam(existing, 'medium', urlMdm);
 			var campaign = mergeParam(existing, 'campaign', urlCpn);
+			var referal = mergeParam(existing, 'referal', urlRfr);
 
 			if (source !== undefined) { pepites.source = source; }
 			if (medium !== undefined) { pepites.medium = medium; }
 			if (campaign !== undefined) { pepites.campaign = campaign; }
+			if (referal !== undefined) { pepites.referal = referal; }
 
 			Cookies.set('cookie_utms', pepites, { expires: config.cookieExpiryDays });
 		}
@@ -175,13 +189,10 @@
 		// --- Réinjection des UTM dans les formulaires -------------------------
 		var data = parseCookieJson(Cookies.get('cookie_utms'));
 		if (data) {
-			// « referal » n'est jamais écrit dans le cookie ; conservé pour compat.
-			var referral = data.referal !== undefined ? data.referal.replace(/\./g, '+') : '';
-
 			setFieldValue('field_source', data.source);
 			setFieldValue('field_medium', data.medium);
 			setFieldValue('field_campaign', data.campaign);
-			setFieldValue('field_referal', referral);
+			setFieldValue('field_referal', data.referal);
 		}
 	});
 

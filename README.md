@@ -32,10 +32,10 @@ La bibliothèque `js-cookie` est déjà incluse en tête du fichier — rien d'a
 
 ## utm-capture-simple.js
 
-Version minimale, **sans bandeau ni Google Analytics** : elle se contente de
-récupérer les UTM de l'URL, de les cumuler dans le cookie `cookie_utms`, puis de
-réinjecter ces valeurs dans les champs `field_source`, `field_medium` et
-`field_campaign`. Autonome, aucune dépendance.
+Version minimale, **sans bandeau ni Google Analytics** : elle récupère les UTM
+de l'URL **et le domaine du site référent**, les cumule dans le cookie
+`cookie_utms`, puis réinjecte ces valeurs dans les champs `field_source`,
+`field_medium`, `field_campaign` et `field_referal`. Autonome, aucune dépendance.
 
 ```html
 <script src="src/utm-capture-simple.js"></script>
@@ -51,12 +51,16 @@ correspondante. Rien à coder côté formulaire — il suffit d'ajouter des cham
 
 ### IDs reconnus
 
-| `id` du champ    | Contenu injecté         | Disponible dans                    |
-| ---------------- | ----------------------- | ---------------------------------- |
-| `field_source`   | `utm_source` cumulés    | les deux scripts                   |
-| `field_medium`   | `utm_medium` cumulés    | les deux scripts                   |
-| `field_campaign` | `utm_campaign` cumulés  | les deux scripts                   |
-| `field_referal`  | referral (réservé)      | `utm-capture-with-cookie-bar.js`   |
+| `id` du champ    | Contenu injecté           | Disponible dans  |
+| ---------------- | ------------------------- | ---------------- |
+| `field_source`   | `utm_source` cumulés      | les deux scripts |
+| `field_medium`   | `utm_medium` cumulés      | les deux scripts |
+| `field_campaign` | `utm_campaign` cumulés    | les deux scripts |
+| `field_referal`  | domaine du site référent  | les deux scripts |
+
+Le référent (`field_referal`) correspond au domaine d'où provient le visiteur
+(`document.referrer`, ex. `google.com`). Il n'est enregistré que s'il est
+**externe** (différent de votre propre domaine), et cumulé comme les UTM.
 
 ### Exemple HTML
 
@@ -68,6 +72,7 @@ correspondante. Rien à coder côté formulaire — il suffit d'ajouter des cham
   <input type="hidden" id="field_source"   name="utm_source">
   <input type="hidden" id="field_medium"   name="utm_medium">
   <input type="hidden" id="field_campaign" name="utm_campaign">
+  <input type="hidden" id="field_referal"  name="referrer">
 
   <button type="submit">Envoyer</button>
 </form>
@@ -86,19 +91,23 @@ Utilisez le shortcode `hidden` avec l'option `id:` pour générer le bon attribu
 [hidden field_source id:field_source]
 [hidden field_medium id:field_medium]
 [hidden field_campaign id:field_campaign]
+[hidden field_referal id:field_referal]
 ```
 
 ### Personnaliser les IDs (version simple)
 
-Dans `utm-capture-simple.js`, la correspondance paramètre → champ est déclarée
-dans la config, modifiable sans toucher au reste du code :
+Dans `utm-capture-simple.js`, chaque source capturée est déclarée dans le
+tableau `sources` (clé du cookie, `id` du champ à remplir, et fonction de
+récupération). Il suffit de changer la valeur `field:` pour l'adapter à vos
+formulaires :
 
 ```js
-params: [
-  { url: 'utm_source',   key: 'source',   field: 'field_source' },
-  { url: 'utm_medium',   key: 'medium',   field: 'field_medium' },
-  { url: 'utm_campaign', key: 'campaign', field: 'field_campaign' }
-]
+var sources = [
+  { key: 'source',   field: 'field_source',   get: function () { return getParameter('utm_source'); } },
+  { key: 'medium',   field: 'field_medium',   get: function () { return getParameter('utm_medium'); } },
+  { key: 'campaign', field: 'field_campaign', get: function () { return getParameter('utm_campaign'); } },
+  { key: 'referal',  field: 'field_referal',  get: getReferrerHost }
+];
 ```
 
 > **Bon à savoir** : l'injection fonctionne pour un formulaire HTML classique,
